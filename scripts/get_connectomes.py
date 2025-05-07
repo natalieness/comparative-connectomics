@@ -16,7 +16,7 @@ from pymaid_creds import url, name, password, token
 
 from scripts.nx_graph_functions import build_adj_directed_graph, plot_nx_digraph
 from scripts.change_class import ChangeLog
-from scripts.network_manipulation_functions import generate_mirror_network, neuron_duplication, neuron_deletion
+from scripts.network_manipulation_functions import generate_mirror_network, neuron_duplication, neuron_deletion, new_rand_neurons
 
 rm = pymaid.CatmaidInstance(url, token, name, password)
 
@@ -70,6 +70,8 @@ n_ops_neuron = 30
 adj_mirror, log = neuron_duplication(adj_mirror, log, rng, n_ops=n_ops_neuron)
 adj_mirror, log = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron, n_og_neurons=n_og_neurons)
 
+#%% sandbox new functions 
+adj_mirror, log = new_rand_neurons(adj_mirror, log, rng, n_ops=1)
 
 # %% save altered adjacency matrix and change log 
 
