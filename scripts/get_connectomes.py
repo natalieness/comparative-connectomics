@@ -62,11 +62,13 @@ log = ChangeLog()
 adj_mirror = generate_mirror_network(adj)
 
 # %% apply network manipulations 
+#get original number of neurons, so only those will be deleted 
+n_og_neurons = adj_mirror.shape[0]
 
 # neuron-level manipulations
 n_ops_neuron = 30
 adj_mirror, log = neuron_duplication(adj_mirror, log, rng, n_ops=n_ops_neuron)
-adj_mirror, log = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron)
+adj_mirror, log = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron, n_og_neurons=n_og_neurons)
 
 
 # %% save altered adjacency matrix and change log 
@@ -80,6 +82,6 @@ adj_mirror.to_csv(path_for_data+'adj_mirror.csv')
 with open(path_for_data+'change_log.pkl', 'wb') as f:
     pickle.dump(log, f)
 
-print('adjancey matrix and log saved')
+print('Adjancency matrix and log saved')
 
 # %%

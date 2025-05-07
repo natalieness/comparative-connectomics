@@ -56,9 +56,14 @@ def neuron_duplication(adj_, log, rng, n_ops=1):
 
     return new_adj, log
 
-def neuron_deletion(adj_, log, rng, n_ops=1):
+def neuron_deletion(adj_, log, rng, n_ops=1, n_og_neurons=None):
     new_adj = adj_.copy()
-    n_neurons = new_adj.shape[0]
+    if n_og_neurons != None:
+        # if n_og_neurons is provided, restrict deletions to the original neurons
+        n_neurons = n_og_neurons
+    else:
+        n_neurons = new_adj.shape[0]
+        
     for n in range(n_ops):
         # select a random neuron idx
         neuron_idx = rng.integers(low=0, high=n_neurons, size=1)[0]
