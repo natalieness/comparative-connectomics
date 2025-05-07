@@ -43,31 +43,30 @@ print(f'Number of synapses: {sum(adj)}')
 #save adjacency matrix 
 adj.to_csv(path_for_data+'adj.csv')
 
-# %%
+# %%  view as graph (currently not really used)
 
-G = build_adj_directed_graph(adj)
+#G = build_adj_directed_graph(adj)
 
-# %%
-plot_nx_digraph(G, node_size=1, plot_scale=0.01)
+# warning: plotting takes a few minutes
+#plot_nx_digraph(G, node_size=1, plot_scale=0.01)
 
-# %%
+# %% set random seed, initiate log and generate mirror adjacency matrix to manipulate
 seed = 42
 #generate numpy random instance
 rng = np.random.default_rng(seed=seed)
 
-
-
-adj_mirror = generate_mirror_network(adj)
-#%% class instance to save matrix changes 
-
-
-# %%
+#initiate instance of ChangeLog class
 log = ChangeLog()
+
+# get mirror adjacency matrix
+adj_mirror = generate_mirror_network(adj)
+
+# %% apply network manipulations 
 
 # neuron-level manipulations
 n_ops_neuron = 30
-adj_mirror, log = neuron_duplication(adj_mirror, log, n_ops=n_ops_neuron)
-adj_mirror, log = neuron_deletion(adj_mirror, log, n_ops=n_ops_neuron)
+adj_mirror, log = neuron_duplication(adj_mirror, log, rng, n_ops=n_ops_neuron)
+adj_mirror, log = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron)
 
 
 # %% save altered adjacency matrix and change log 

@@ -1,6 +1,9 @@
 ''' Functions to generate an artificially manipulated connectome from 
 an existing connectome.'''
 
+import numpy as np
+import pandas as pd
+
 ### Basics ###
 
 def generate_mirror_network(adj_):
@@ -10,7 +13,7 @@ def generate_mirror_network(adj_):
 ### Neuron-level manipulations ###
 
 
-def neuron_duplication(adj_, log, n_ops=1):
+def neuron_duplication(adj_, log, rng, n_ops=1):
     new_adj = adj_.copy()
     #calling n_neurons here prevents duplication of new neurons
     n_neurons = new_adj.shape[0]
@@ -53,7 +56,7 @@ def neuron_duplication(adj_, log, n_ops=1):
 
     return new_adj, log
 
-def neuron_deletion(adj_, log, n_ops=1):
+def neuron_deletion(adj_, log, rng, n_ops=1):
     new_adj = adj_.copy()
     n_neurons = new_adj.shape[0]
     for n in range(n_ops):
