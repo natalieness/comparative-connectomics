@@ -14,9 +14,9 @@ from contools import Celltype, Celltype_Analyzer, Promat
 import pymaid
 from pymaid_creds import url, name, password, token
 
-from scripts.nx_graph_functions import build_adj_directed_graph, plot_nx_digraph
-from scripts.change_class import ChangeLog
-from scripts.network_manipulation_functions import generate_mirror_network, neuron_duplication, neuron_deletion, new_rand_neurons
+from generate_connectomes.nx_graph_functions import build_adj_directed_graph, plot_nx_digraph
+from generate_connectomes.change_class import ChangeLog
+from generate_connectomes.network_manipulation_functions import generate_mirror_network, neuron_duplication, neuron_deletion, new_rand_neurons
 
 rm = pymaid.CatmaidInstance(url, token, name, password)
 
