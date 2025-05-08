@@ -39,58 +39,41 @@ print(f"Working with {len(all_neurons)} neurons")
 adj = pymaid.adjacency_matrix(all_neurons) #consider syn threshold?
 print(f"Adjacency matrix shape: {adj.shape}")
 print(f'Number of synapses: {sum(adj > 0)}')
+# %% get pairs 
 
-# also get information about the neurons ? position of soma?
+pairs_data = pd.read_csv(path_for_data+'pairs-2022-02-14.csv')
+n_matched = pairs_data.shape[0]
+print(f"Number of matched pairs: {n_matched}, total number of neurons: {n_matched*2}")
+u_reg = pairs_data['region'].unique()
+print(f"Unique regions: {u_reg}")
 
-#save adjacency matrix 
-adj.to_csv(path_for_data+'adj.csv')
+# %% 
+adj_ids = list(adj.columns)
+n_adj_ids = len(adj_ids)
+print(f"Number of neurons in adj matrix: {n_adj_ids}")
 
-# %%  view as graph (currently not really used)
+# %% 
+#get all neurons that are matched across hemispheres
+all_matched = np.concat((pairs_data['leftid'].values, pairs_data['rightid'].values), axis=0)
 
-#G = build_adj_directed_graph(adj)
+#get overlap between matched neurons and neurons in adjacency matrix
+matched_in_adj = np.intersect1d(all_matched, adj_ids)
+unique_to_adj = np.setdiff1d(adj_ids, matched_in_adj)
+unique_to_pairs = np.setdiff1d(all_matched, matched_in_adj)
+print(f"Number of matched neurons in adjacency matrix: {len(matched_in_adj)}")
+print(f"Number of neurons unique to adjacency matrix (not in pairs): {len(unique_to_adj)}")
+print(f"Number of neurons unique to pairs (not in adj): {len(unique_to_pairs)}")
 
-# warning: plotting takes a few minutes
-#plot_nx_digraph(G, node_size=1, plot_scale=0.01)
+# %% get overlap with all neurons where both left and right are matched 
 
-# %% set random seed, initiate log and generate mirror adjacency matrix to manipulate
-seed = 42
-#generate numpy random instance
-rng = np.random.default_rng(seed=seed)
+bilateral_skids_in_adj = []
+for row in range(pairs_data.shape[0]):
+    left = pairs_data['leftid'].loc[row]
+    right = pairs_data['rightid'].loc[row]
+    if left in adj_ids and right in adj_ids:
+        bilateral_skids_in_adj.append((left, right))
 
-#initiate instance of ChangeLog class
-log = ChangeLog()
-
-# get mirror adjacency matrix
-adj_mirror = generate_mirror_network(adj)
-
-# %% apply network manipulations 
-#get original number of neurons, so only those will be deleted 
-n_og_neurons = adj_mirror.shape[0]
-
-# neuron-level manipulations
-n_ops_neuron = 30
-adj_mirror, log = neuron_duplication(adj_mirror, log, rng, n_ops=n_ops_neuron)
-adj_mirror, log = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron, n_og_neurons=n_og_neurons)
-adj_mirror, log = new_rand_neurons(adj_mirror, log, rng, n_ops=1)
-
-'''
-To do: 
-- shuffle rows and columns of adjacency matrix
-- replace index/column names with realistic neuron names
-'''
-
-# %% save altered adjacency matrix and change log 
-
-#sanity check to see that changes have been made 
-print(log)
-#save new adjacency matrix
-adj_mirror.to_csv(path_for_data+'adj_mirror.csv')
-
-#save change log class instance
-with open(path_for_data+'change_log.pkl', 'wb') as f:
-    pickle.dump(log, f)
-
-print('Adjancency matrix and log saved')
-### TODO: also save log as csv file to be safe it will be accessible
+n_bilateral_skids_in_adj = len(bilateral_skids_in_adj)
+print(f"Number of pairs in adjacency matrix: {n_bilateral_skids_in_adj}, total number of neurons: {n_bilateral_skids_in_adj*2} out of {n_adj_ids}")
 
 # %%
