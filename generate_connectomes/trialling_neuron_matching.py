@@ -1,23 +1,12 @@
 #%% 
 import os
-from dataclasses import dataclass, asdict
-from typing import List, Tuple, Dict, Union, Any
-import pickle
 from itertools import chain
 
-import networkx as nx
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-from contools import Celltype, Celltype_Analyzer, Promat
 import pymaid
 from pymaid_creds import url, name, password, token
-
-from generate_connectomes.nx_graph_functions import build_adj_directed_graph, plot_nx_digraph
-from generate_connectomes.change_class import ChangeLog
-from generate_connectomes.network_manipulation_functions import generate_mirror_network, neuron_duplication, neuron_deletion, new_rand_neurons
 
 rm = pymaid.CatmaidInstance(url, token, name, password)
 
