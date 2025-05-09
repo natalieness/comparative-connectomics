@@ -186,7 +186,7 @@ def random_partition_weights(rng, n_targets, total_weight):
     weights = [total_weight * p for p in partition]
     return weights
 
-def new_rand_neurons(adj_, log, rng, n_ops=1):
+def new_rand_neurons(adj_, log, rng, n_ops=1, pairs_dict=None):
     new_adj = adj_.copy()
     #get general network properties to copy 
     mean_n_out, mean_w_out, mean_n_in, mean_w_in = get_connectivity_properties(adj_)
@@ -217,10 +217,21 @@ def new_rand_neurons(adj_, log, rng, n_ops=1):
         new_adj.loc[new_n_name] = new_row
         new_adj[new_n_name] = new_col
 
+        #add neuron to pairs_dict to avoid ValueError
+        if pairs_dict != None:
+            #randomly assign side and region 
+            nside = rng.choice(['left', 'right'])
+            nregion = rng.choice(['A1','A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'SEZ', 'T2', nan, 'sensory'])
+            pairs_dict[new_n_name] = {
+                'side': nside,
+                'region': nregion,
+                'partner': [] #is this empty thing an issue? need to recheck
+            }
+
         log.add_neuron_change(
             operation='new_rand_neurons',
             source_index=None,
             new_index=new_n_name,
             weight_handling='random partition mean weights'
         )
-    return new_adj, log
+    return new_adj, log, pairs_dict

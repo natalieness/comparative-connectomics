@@ -105,13 +105,14 @@ n_og_neurons = adj_mirror.shape[0]
 # neuron-level manipulations
 n_ops_neuron = 30
 adj_mirror, log, pairs_dict = neuron_duplication(adj_mirror, log, rng, n_ops=n_ops_neuron, bilateral=False, pairs_dict=pairs_dict)
-adj_mirror, log, pairs_dict = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron, n_og_neurons=n_og_neurons, bilateral=False, pairs_dict=pairs_dict)
-adj_mirror, log = new_rand_neurons(adj_mirror, log, rng, n_ops=1)
+adj_mirror, log = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron, n_og_neurons=n_og_neurons, bilateral=False, pairs_dict=pairs_dict)
+adj_mirror, log, pairs_dict = new_rand_neurons(adj_mirror, log, rng, n_ops=1, pairs_dict=pairs_dict)
 
 '''
 To do: 
 - shuffle rows and columns of adjacency matrix
 - replace index/column names with realistic neuron names
+-add option to add new bilaterally-matched neurons to new_rand_neurons
 '''
 
 # %% save altered adjacency matrix and change log 
