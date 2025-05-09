@@ -3,6 +3,7 @@ import os
 from dataclasses import dataclass, asdict
 from typing import List, Tuple, Dict, Union, Any
 import pickle
+from itertools import chain
 
 import networkx as nx
 import numpy as np
@@ -77,6 +78,9 @@ n_bilateral_skids_in_adj = len(bilateral_skids_in_adj)
 print(f"Number of pairs in adjacency matrix: {n_bilateral_skids_in_adj}, total number of neurons: {n_bilateral_skids_in_adj*2} out of {n_adj_ids}")
 bilateral_skids_in_adj_flat = np.unique(np.array(list(chain.from_iterable(bilateral_skids_in_adj))))
 
+bilateral_adj = adj.loc[bilateral_skids_in_adj_flat, bilateral_skids_in_adj_flat]
+
+print(f"Filtered adjacency matrix shape: {bilateral_adj.shape}")
 
 # %% filter adj by bilateral skids 
 
