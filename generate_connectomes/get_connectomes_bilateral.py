@@ -48,6 +48,11 @@ print(f'Number of synaptic connections: {(adj > 0).sum().sum()}')
 
 # %%  get and filter by pairs data to only include neurons matched across hemispheres
 
+### NOTE: consider not filtering by pairs data, but instead using all neurons, some without
+### bilateral partner, and retrieving spatial information about them through a 
+### separate query for soma location
+
+
 pairs_data = pd.read_csv(path_for_data+'pairs-2022-02-14.csv')
 #get all neurons that are matched across hemispheres
 all_matched = np.concat((pairs_data['leftid'].values, pairs_data['rightid'].values), axis=0)
@@ -99,8 +104,8 @@ n_og_neurons = adj_mirror.shape[0]
 
 # neuron-level manipulations
 n_ops_neuron = 30
-adj_mirror, log = neuron_duplication(adj_mirror, log, rng, n_ops=n_ops_neuron)
-adj_mirror, log = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron, n_og_neurons=n_og_neurons)
+adj_mirror, log, pairs_dict = neuron_duplication(adj_mirror, log, rng, n_ops=n_ops_neuron, bilateral=False, pairs_dict=pairs_dict)
+adj_mirror, log, pairs_dict = neuron_deletion(adj_mirror, log, rng, n_ops=n_ops_neuron, n_og_neurons=n_og_neurons, bilateral=False, pairs_dict=pairs_dict)
 adj_mirror, log = new_rand_neurons(adj_mirror, log, rng, n_ops=1)
 
 '''

@@ -13,7 +13,37 @@ def generate_mirror_network(adj_):
 ### Neuron-level manipulations ###
 
 
-def neuron_duplication(adj_, log, rng, n_ops=1):
+#smaller functions used in neuron duplication
+def get_dup_neuron_row(neuron_idx, new_adj, rng):
+    n_source = new_adj.iloc[neuron_idx, :].values
+    syn_out = np.where(n_source > 0)[0]
+    w_out = n_source[syn_out]
+    new_w_out = rng.shuffle(w_out)
+    #set new weights 
+    new_n_source = n_source.copy()
+    new_n_source[syn_out] = new_w_out
+    return new_n_source
+def get_dup_neuron_col(neuron_idx, new_adj, rng):
+    n_target = new_adj.iloc[:, neuron_idx].values
+    n_in = np.where(n_target > 0)[0]
+    w_in = n_target[n_in]
+    new_w_in = rng.shuffle(w_in)
+    #set new weights
+    new_n_target = n_target.copy()
+    new_n_target[n_in] = new_w_in
+    return new_n_target
+
+def neuron_duplication(adj_, log, rng, n_ops=1, bilateral=False, pairs_dict=None):
+    # if bilateral is True, duplicate partner neuron on contralteral side
+    # if so, pairs_dict must be provided 
+    if bilateral:
+        #check pairs_dict is provided 
+        if pairs_dict == None:
+            raise ValueError("pairs_dict must be provided if bilateral is True")
+    #if bilateral is False, give warning if pairs_dict is not provided as new neuron will not be added to it 
+    if pairs_dict == None:
+        print("Warning: pairs_dict is not provided, new neurons will not be added to it")
+
     new_adj = adj_.copy()
     #calling n_neurons here prevents duplication of new neurons
     n_neurons = new_adj.shape[0]
@@ -22,41 +52,80 @@ def neuron_duplication(adj_, log, rng, n_ops=1):
         neuron_idx = rng.integers(low=0, high=n_neurons, size=1)[0]
         # get the neuron name
         neuron_name = new_adj.columns[neuron_idx]
-
-        #get neuron outputs 
-        n_source = new_adj.iloc[neuron_idx, :].values
-        syn_out = np.where(n_source > 0)[0]
-        w_out = n_source[syn_out]
-        new_w_out = rng.shuffle(w_out)
-        #set new weights 
-        new_n_source = n_source.copy()
-        new_n_source[syn_out] = new_w_out
-
         #set new neuron name
         new_n_name = f'new_{n}'
+        #set neuron outputs 
+        new_n_source = get_dup_neuron_row(neuron_idx, new_adj, rng)
         new_adj.loc[new_n_name] = new_n_source
-
-        #get neuron inputs
-        n_target = new_adj.iloc[:, neuron_idx].values
-        n_in = np.where(n_target > 0)[0]
-        w_in = n_target[n_in]
-        new_w_in = rng.shuffle(w_in)
-        #set new weights
-        new_n_target = n_target.copy()
-        new_n_target[n_in] = new_w_in
-    
+        #set neuron inputs
+        new_n_target = get_dup_neuron_col(neuron_idx, new_adj, rng)
         new_adj[new_n_name] = new_n_target
+        
+        #if bilateral is True, also duplicated partner neuron 
+        if bilateral:
+            #get partner neuron name
+            partner_name = pairs_dict[neuron_name]['partner']
+            #if multiple partners, randomly select one
+            if len(partner_name) > 1:
+                partner_name = rng.choice(partner_name)
+            
+            #get partner neuron idx
+            partner_idx = new_adj.columns.get_loc(partner_name[0])
+            #give new partner neuron a new name 
+            new_p_name = f'new_{n}_partner'
 
+            #get partner neuron row and column
+            new_p_source = get_dup_neuron_row(partner_idx, new_adj, rng)
+            new_adj.loc[new_p_name] = new_p_source
+            new_p_target = get_dup_neuron_col(partner_idx, new_adj, rng)
+            new_adj[new_p_name] = new_p_target
+
+
+        #Need to add to pairs_dict, if unilateral and bilateral
+        if pairs_dict != None: 
+            if bilateral == False:
+                #add new neuron to pairs_dict
+                pairs_dict[new_n_name] = {
+                    'side': pairs_dict[neuron_name]['side'],
+                    'region': pairs_dict[neuron_name]['region'],
+                    'partner': pairs_dict[neuron_name]['partner']
+                }
+            elif bilateral == True:
+                #add new neuron ton pairs_dict with new partner
+                pairs_dict[new_n_name] = {
+                    'side': pairs_dict[neuron_name]['side'],
+                    'region': pairs_dict[neuron_name]['region'],
+                    'partner': [new_p_name]
+                }
+                #add new partner to pairs_dict
+                pairs_dict[new_p_name] = {
+                    'side': pairs_dict[partner_name[0]]['side'],
+                    'region': pairs_dict[partner_name[0]]['region'],
+                    'partner': [new_n_name]
+                }
+
+        #Need to add pair to log if 2 neurons duplicated 
         log.add_neuron_change(
             operation='neuron_duplication',
             source_index=neuron_name,
             new_index=new_n_name,
             weight_handling='shuffling existing'
         )
+        if bilateral:
+            log.add_neuron_change(
+                operation='neuron_duplication',
+                source_index=partner_name,
+                new_index=new_p_name,
+                weight_handling='shuffling existing'
+            )
 
-    return new_adj, log
+    return new_adj, log, pairs_dict
 
-def neuron_deletion(adj_, log, rng, n_ops=1, n_og_neurons=None):
+def neuron_deletion(adj_, log, rng, n_ops=1, n_og_neurons=None, bilateral=False, pairs_dict=None):
+    if bilateral:
+        if pairs_dict == None:
+            raise ValueError("pairs_dict must be provided if bilateral is True")
+    
     new_adj = adj_.copy()
     if n_og_neurons != None:
         # if n_og_neurons is provided, restrict deletions to the original neurons
@@ -74,12 +143,29 @@ def neuron_deletion(adj_, log, rng, n_ops=1, n_og_neurons=None):
         new_adj.drop(columns=[neuron_name], inplace=True)
         new_adj.drop(index=[neuron_name], inplace=True)
 
+        if bilateral:
+            #get partner neuron and delete too 
+            partner_name = pairs_dict[neuron_name]['partner']
+            #if multiple partners, randomly select one
+            if len(partner_name) > 1:
+                partner_name = rng.choice(partner_name)
+            # delete the partner neuron from the adjacency matrix
+            new_adj.drop(columns=[partner_name[0]], inplace=True)
+            new_adj.drop(index=[partner_name[0]], inplace=True)
+
         log.add_neuron_change(
             operation='neuron_deletion',
             source_index=neuron_name,
             new_index=None,
             weight_handling='NA'
         )
+        if bilateral:
+            log.add_neuron_change(
+                operation='neuron_deletion',
+                source_index=partner_name[0],
+                new_index=None,
+                weight_handling='NA'
+            )
 
     return new_adj, log
 
