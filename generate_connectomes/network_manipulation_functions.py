@@ -218,20 +218,11 @@ def new_rand_neurons(adj_, log, rng, n_ops=1, pairs_dict=None):
         new_row[neurons_out] = new_weights_out 
         new_col[neurons_in] = new_weights_in
  
-        
         # get new neuron name 
         new_n_name = f'newnew_{n}'
-        #get old index 
-        old_index = new_adj.index.tolist()
-        new_index = old_index + [new_n_name]
         #add new row and column to adjacency matrix
-
         new_adj.loc[new_n_name] = new_row
-        new_adj.reset_index(drop=False, inplace=True)  # reset index to ensure new row is added correctly
         new_adj[new_n_name] = new_col
-
-        #set new index 
-        new_adj.index = new_index
         
 
         #add neuron to pairs_dict to avoid ValueError
