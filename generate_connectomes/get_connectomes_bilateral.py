@@ -18,7 +18,7 @@ from pymaid_creds import url, name, password, token
 from generate_connectomes.get_pairs_dict import create_pairs_dict
 from generate_connectomes.nx_graph_functions import build_adj_directed_graph, plot_nx_digraph
 from generate_connectomes.change_class import ChangeLog
-from generate_connectomes.network_manipulation_functions import generate_mirror_network, neuron_duplication, neuron_deletion, new_rand_neurons
+from generate_connectomes.network_manipulation_functions import generate_mirror_network, neuron_duplication, neuron_deletion, new_rand_neurons, get_connectivity_properties
 
 rm = pymaid.CatmaidInstance(url, token, name, password)
 
@@ -55,7 +55,7 @@ print(f'Number of synaptic connections: {(adj > 0).sum().sum()}')
 
 pairs_data = pd.read_csv(path_for_data+'pairs-2022-02-14.csv')
 #get all neurons that are matched across hemispheres
-all_matched = np.concat((pairs_data['leftid'].values, pairs_data['rightid'].values), axis=0)
+all_matched = pd.concat((pairs_data['leftid'], pairs_data['rightid']), axis=0)
 adj_ids = list(adj.columns)
 n_adj_ids = len(adj_ids)
 
@@ -114,7 +114,9 @@ To do:
 - replace index/column names with realistic neuron names
 -add option to add new bilaterally-matched neurons to new_rand_neurons
 '''
-
+#check if any nan elements in adjacency matrix
+if adj_mirror.isnull().values.any():
+    print("Warning: Adjacency matrix contains NaN values. This may cause issues in further analysis.")
 # %% save altered adjacency matrix and change log 
 
 #sanity check to see that changes have been made 

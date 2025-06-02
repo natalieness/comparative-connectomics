@@ -18,7 +18,8 @@ def get_dup_neuron_row(neuron_idx, new_adj, rng):
     n_source = new_adj.iloc[neuron_idx, :].values
     syn_out = np.where(n_source > 0)[0]
     w_out = n_source[syn_out]
-    new_w_out = rng.shuffle(w_out)
+    new_w_out = w_out.copy()
+    rng.shuffle(new_w_out)
     #set new weights 
     new_n_source = n_source.copy()
     new_n_source[syn_out] = new_w_out
@@ -27,7 +28,8 @@ def get_dup_neuron_col(neuron_idx, new_adj, rng):
     n_target = new_adj.iloc[:, neuron_idx].values
     n_in = np.where(n_target > 0)[0]
     w_in = n_target[n_in]
-    new_w_in = rng.shuffle(w_in)
+    new_w_in = w_in.copy()
+    rng.shuffle(new_w_in)
     #set new weights
     new_n_target = n_target.copy()
     new_n_target[n_in] = new_w_in
@@ -54,13 +56,17 @@ def neuron_duplication(adj_, log, rng, n_ops=1, bilateral=False, pairs_dict=None
         neuron_name = new_adj.columns[neuron_idx]
         #set new neuron name
         new_n_name = f'new_{n}'
+
         #set neuron outputs 
         new_n_source = get_dup_neuron_row(neuron_idx, new_adj, rng)
         new_adj.loc[new_n_name] = new_n_source
+
         #set neuron inputs
         new_n_target = get_dup_neuron_col(neuron_idx, new_adj, rng)
+ 
         new_adj[new_n_name] = new_n_target
         
+
         #if bilateral is True, also duplicated partner neuron 
         if bilateral:
             #get partner neuron name
@@ -73,12 +79,16 @@ def neuron_duplication(adj_, log, rng, n_ops=1, bilateral=False, pairs_dict=None
             partner_idx = new_adj.columns.get_loc(partner_name[0])
             #give new partner neuron a new name 
             new_p_name = f'new_{n}_partner'
-
+ 
             #get partner neuron row and column
             new_p_source = get_dup_neuron_row(partner_idx, new_adj, rng)
             new_adj.loc[new_p_name] = new_p_source
+
             new_p_target = get_dup_neuron_col(partner_idx, new_adj, rng)
+
             new_adj[new_p_name] = new_p_target
+            #add index back
+            new_adj.index = new_index
 
 
         #Need to add to pairs_dict, if unilateral and bilateral
@@ -195,7 +205,7 @@ def new_rand_neurons(adj_, log, rng, n_ops=1, pairs_dict=None):
         #get current neurons in adj 
         n_neurons = new_adj.shape[0]
         new_row = np.zeros((n_neurons))
-        new_col = np.zeros((n_neurons))
+        new_col = np.zeros((n_neurons + 1))
         # select random neurons to form connections with 
         neurons_out = rng.integers(low=0, high=n_neurons, size=int(mean_n_out))
         neurons_in = rng.integers(low=0, high=n_neurons, size=int(mean_n_in))
@@ -205,23 +215,30 @@ def new_rand_neurons(adj_, log, rng, n_ops=1, pairs_dict=None):
         new_weights_in = random_partition_weights(rng, len(neurons_in), mean_w_in)
 
         #set weights 
-        new_row[neurons_out] = new_weights_out
+        new_row[neurons_out] = new_weights_out 
         new_col[neurons_in] = new_weights_in
-        #add weights to new row
-        new_col = np.concat((new_col, np.array([0])))
-
+ 
+        
         # get new neuron name 
         new_n_name = f'newnew_{n}'
+        #get old index 
+        old_index = new_adj.index.tolist()
+        new_index = old_index + [new_n_name]
         #add new row and column to adjacency matrix
 
         new_adj.loc[new_n_name] = new_row
+        new_adj.reset_index(drop=False, inplace=True)  # reset index to ensure new row is added correctly
         new_adj[new_n_name] = new_col
+
+        #set new index 
+        new_adj.index = new_index
+        
 
         #add neuron to pairs_dict to avoid ValueError
         if pairs_dict != None:
             #randomly assign side and region 
             nside = rng.choice(['left', 'right'])
-            nregion = rng.choice(['A1','A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'SEZ', 'T2', nan, 'sensory'])
+            nregion = rng.choice(['A1','A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'SEZ', 'T2', np.nan, 'sensory'])
             pairs_dict[new_n_name] = {
                 'side': nside,
                 'region': nregion,
