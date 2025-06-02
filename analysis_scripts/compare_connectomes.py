@@ -47,11 +47,14 @@ from graspologic.plot import heatmap
 np.random.seed(42)
 
 
+
 stat, pval, misc = density_test(adj1, adj2, method='fisher')
+print(f'Comparison with generated mirror network, pvalue = {pval}')
 
-#compare to random 
-random_adj = er_np(n=adj1.shape[0], p=0.01, directed=True)
+#compare to random network (sanity check)
+p=0.0124
+random_adj = er_np(n=adj1.shape[0], p=p, directed=True)
 stat_random, pval_random, misc_random = density_test(adj1, random_adj, method='fisher')
-
+print(f'Comparison with random network of same size with probability {p}, pvalue = {pval_random}')
 
 # %%
